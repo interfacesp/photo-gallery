@@ -15,4 +15,8 @@ export class Tab2Page {
      this.photoService.addNewToGalery(); 
    }
 
+   getPhotos(){
+      return this.photoService.photos;    
+   }
+
 }
