@@ -8,6 +8,7 @@ import { Storage } from '@capacitor/storage';
   providedIn: 'root'
 })
 export class PhotoService {
+  public photos: UserPhoto[] = [];
 
   constructor() { }
 
@@ -21,5 +22,18 @@ export class PhotoService {
         quality: 100
       }
     );
+
+      this.photos.unshift(
+        {
+          filepath:"soon...", 
+          webViewPath: capturedPic.webPath
+        }
+      );
+
   }
+}
+
+export interface UserPhoto {
+  filepath: string; 
+  webViewPath: string; 
 }
