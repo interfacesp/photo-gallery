@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import {Camera, CameraResultType, CameraSource, Photo} from '@capacitor/camera';  
 import { Directory, Filesystem,  } from '@capacitor/filesystem';
 import { Storage } from '@capacitor/storage';
-import { __makeTemplateObject } from 'tslib';
 
 
 @Injectable({
@@ -10,6 +9,8 @@ import { __makeTemplateObject } from 'tslib';
 })
 export class PhotoService {
   public photos: UserPhoto[] = [];
+  private PHOTO_STORAGE: string = 'photos';
+  
 
   constructor() { }
 
@@ -36,6 +37,36 @@ export class PhotoService {
 
     this.photos.unshift(takenUserPhoto);
 
+    Storage.set(
+      {
+        key: this.PHOTO_STORAGE, 
+        value: JSON.stringify(this.photos),
+      }
+    );
+
+  }
+
+  public async loadSaved(){
+      const photoList = await Storage.get({
+        key: this.PHOTO_STORAGE
+      });
+
+      this.photos = JSON.parse(photoList.value) || []; 
+
+
+      //Copied from Ionic framwework doc -tutorial 
+      // Display the photo by reading into base64 format
+      for (let aPhoto of this.photos) {
+        // Read each saved photo's data from the Filesystem
+        const readFile = await Filesystem.readFile({
+          path: aPhoto.filepath,
+          directory: Directory.Data,
+        });
+
+        // Web platform only: Load the photo as base64 data
+        aPhoto.webViewPath = `data:image/jpeg;base64,${readFile.data}`;
+      }
+
   }
 
   private async savePicture(aPhoto: Photo){
@@ -48,7 +79,7 @@ export class PhotoService {
       await Filesystem.writeFile({
         path: fileName, 
         data: base64Data,
-        directory: Directory.Documents
+        directory: Directory.Data
         }
       ); 
 
@@ -62,7 +93,7 @@ export class PhotoService {
 
   private async readAsBase64(aPhoto: Photo) {
     // Fetch a photo ,read as a blob and convert to base64
-    const response = await fetch(aPhoto.webPath);
+    const response = await fetch(aPhoto.webPath!);
     const blob = await response.blob();
 
     return await this.convertBlobToBase64(blob) as string;
