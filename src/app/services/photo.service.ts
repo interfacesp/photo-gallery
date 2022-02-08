@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import {Camera, CameraResultType, CameraSource, Photo} from '@capacitor/camera';  
+import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem,  } from '@capacitor/filesystem';
 import { Storage } from '@capacitor/storage';
+import { Platform } from '@ionic/angular';
+
 
 
 @Injectable({
@@ -10,9 +13,11 @@ import { Storage } from '@capacitor/storage';
 export class PhotoService {
   public photos: UserPhoto[] = [];
   private PHOTO_STORAGE: string = 'photos';
-  
+  private currentPlatform: Platform;   
 
-  constructor() { }
+  constructor(platform: Platform) {
+      this.currentPlatform = platform; 
+  }
 
 
   public async addNewToGalery(){
@@ -53,20 +58,21 @@ export class PhotoService {
 
       this.photos = JSON.parse(photoList.value) || []; 
 
+      if(!this.currentPlatform.is('hybrid')){
+        
+          //Copied from Ionic framwework doc -  tutorial 
+          // Display the photo by reading into base64 format
+          for (let aPhoto of this.photos) {
+            // Read each saved photo's data from the Filesystem
+            const readFile = await Filesystem.readFile({
+              path: aPhoto.filepath,
+              directory: Directory.Data,
+            });
 
-      //Copied from Ionic framwework doc -tutorial 
-      // Display the photo by reading into base64 format
-      for (let aPhoto of this.photos) {
-        // Read each saved photo's data from the Filesystem
-        const readFile = await Filesystem.readFile({
-          path: aPhoto.filepath,
-          directory: Directory.Data,
-        });
-
-        // Web platform only: Load the photo as base64 data
-        aPhoto.webViewPath = `data:image/jpeg;base64,${readFile.data}`;
+            // Web platform only: Load the photo as base64 data
+            aPhoto.webViewPath = `data:image/jpeg;base64,${readFile.data}`;
+          }
       }
-
   }
 
   private async savePicture(aPhoto: Photo){
@@ -76,27 +82,52 @@ export class PhotoService {
       //Write file to data directory
       const fileName= new Date().getTime() + "espoir" + ".jpeg";
       
-      await Filesystem.writeFile({
+      const savedFile = await Filesystem.writeFile({
         path: fileName, 
         data: base64Data,
         directory: Directory.Data
         }
       ); 
 
-      // console.log("File written with name" + fileName );
-      return {
-        filepath: fileName,
-        webViewPath: aPhoto.webPath
+      if(this.currentPlatform.is("hybrid")){
+           // Will later Display the new image by rewriting the 'file://' path to HTTP
+          // Details: https://ionicframework.com/docs/building/webview#file-protocol
+
+          return {
+            filePath: savedFile.uri, 
+            webViewPath: Capacitor.convertFileSrc(savedFile.uri),
+          };
+
+      }else {
+        return {
+          filepath: fileName,
+          webViewPath: aPhoto.webPath
+}
       }
+
+
 
   }
 
   private async readAsBase64(aPhoto: Photo) {
-    // Fetch a photo ,read as a blob and convert to base64
-    const response = await fetch(aPhoto.webPath!);
-    const blob = await response.blob();
+    //"hybrid" will detect capacitor / cordova - native runtimes
+    if(this.currentPlatform.is("hybrid")){
+          const file = await Filesystem.readFile(
+            {
+              path: aPhoto.path
+            }
+          ); 
 
-    return await this.convertBlobToBase64(blob) as string;
+          return file.data; 
+    }else {
+          // Fetch a photo ,read as a blob and convert to base64
+          const response = await fetch(aPhoto.webPath);
+          const blob = await response.blob();
+
+          return await this.convertBlobToBase64(blob) as string;
+    }
+
+    
   }
 
   private convertBlobToBase64 = (blob: Blob) =>  new Promise((resolve, reject) => {
