@@ -109,6 +109,31 @@ export class PhotoService {
 
   }
 
+  public async deletePicture(aPhoto: UserPhoto, position: number){
+    //remove photo from array 
+    this.photos.splice(position, 1);
+
+    //Update photos array cache by overwriting the existing phot array
+
+    Storage.set(
+      {
+        key:this.PHOTO_STORAGE, 
+        value: JSON.stringify(this.photos)
+      }
+    );
+
+    //delete photo from File system
+    const fileName = aPhoto.filepath.substring(aPhoto.filepath.lastIndexOf('/') + 1); 
+
+    await Filesystem.deleteFile(
+      {
+        path: fileName,
+        directory: Directory.Data
+      }
+    );
+
+  }
+
   private async readAsBase64(aPhoto: Photo) {
     //"hybrid" will detect capacitor / cordova - native runtimes
     if(this.currentPlatform.is("hybrid")){

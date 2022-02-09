@@ -15,8 +15,8 @@
 
   <ion-grid>
     <ion-row>
-        <ion-col size="6" *ngFor="let aPhoto of getPhotos()" >
-            <ion-img [src]="aPhoto.webViewPath" ></ion-img>
+        <ion-col size="6" *ngFor="let aPhoto of photoService.photos; index as position" >
+            <ion-img [src]="aPhoto.webViewPath" (click)="showActionSheet(aPhoto, position)"></ion-img>
         </ion-col>  
     </ion-row>
   </ion-grid>
