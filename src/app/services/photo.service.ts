@@ -39,6 +39,7 @@ export class PhotoService {
       filepath: savedImage.filepath,
       webViewPath: savedImage.webViewPath
     }; 
+    
 
     this.photos.unshift(takenUserPhoto);
 
@@ -48,6 +49,8 @@ export class PhotoService {
         value: JSON.stringify(this.photos),
       }
     );
+
+    console.log("Photos Array: " + JSON.stringify(this.photos));
 
   }
 
@@ -93,16 +96,19 @@ export class PhotoService {
            // Will later Display the new image by rewriting the 'file://' path to HTTP
           // Details: https://ionicframework.com/docs/building/webview#file-protocol
 
+          console.log("saving file (native)- webViewPath:" + Capacitor.convertFileSrc(savedFile.uri));
+          console.log("saving file (native)- path: " + savedFile.uri);
+
           return {
-            filePath: savedFile.uri, 
-            webViewPath: Capacitor.convertFileSrc(savedFile.uri),
+            filepath: savedFile.uri, 
+            webViewPath: Capacitor.convertFileSrc(savedFile.uri)
           };
 
       }else {
         return {
           filepath: fileName,
           webViewPath: aPhoto.webPath
-}
+        }
       }
 
 
@@ -110,8 +116,13 @@ export class PhotoService {
   }
 
   public async deletePicture(aPhoto: UserPhoto, position: number){
+
+    console.log("UserPhoto (param) - webViewPath: " + aPhoto.webViewPath +  " filePath: " + aPhoto.filepath);
+    
     //remove photo from array 
-    this.photos.splice(position, 1);
+    const deleted = this.photos.splice(position, 1);
+
+    console.log("UserPhoto (deleted): " + deleted[0].webViewPath +  " filePath: " + deleted[0].filepath);
 
     //Update photos array cache by overwriting the existing phot array
 
@@ -123,15 +134,20 @@ export class PhotoService {
     );
 
     //delete photo from File system
-    const fileName = aPhoto.filepath.substring(aPhoto.filepath.lastIndexOf('/') + 1); 
+    
+    const fileName = aPhoto.filepath &&  aPhoto.filepath.substring(aPhoto.filepath.lastIndexOf('/') + 1); 
 
-    await Filesystem.deleteFile(
-      {
-        path: fileName,
-        directory: Directory.Data
-      }
-    );
-
+    if(fileName){
+      await Filesystem.deleteFile(
+        {
+          path: fileName,
+          directory: Directory.Data
+        }
+      );
+    } else {
+      console.error("Something wrong with path: " + aPhoto.filepath ); 
+    }
+    
   }
 
   private async readAsBase64(aPhoto: Photo) {
