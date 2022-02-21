@@ -1,31 +1,52 @@
 import { Injectable } from '@angular/core';
-import { Geolocation, Position } from '@capacitor/geolocation';
+import { Geolocation } from '@capacitor/geolocation';
+import { CustomPosition } from '../tab1/Position';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LocationService {
     
-  location: Promise<Position>;
+  location: CustomPosition | undefined;
 
   constructor() { 
+      this.initPosition();
+  }
+
+    async initPosition()  {
+      const response = await Geolocation.getCurrentPosition();
+      this.setCustomPosition({
+          latitude: response.coords.latitude, 
+          longitude: response.coords.longitude
+      }); 
 
   }
 
-  printPosition() {
-      console.log("start print Pos"); 
 
-
-      const printPosition = async() => {
-        console.log("print Pos"); 
-        const coordinates = await Geolocation.getCurrentPosition();
-        console.log("Current latitude: " + coordinates.coords.latitude);
-        console.log("Current Longitude: " + coordinates.coords.longitude);
-
-      };
-
-      printPosition(); 
+  setCustomPosition(pos: CustomPosition){
+    this.location = pos;
   }
+
+  public getPosition():CustomPosition {
+    if(!this.location){
+      this.initPosition();
+    }
+    return this.location; 
+
+  }
+
+
+
+  
+
+
+
+  
+
+   
+
+  
+
 
 
 

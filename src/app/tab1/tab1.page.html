@@ -1,7 +1,7 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title class="ion-text-center">
-      GeoLocation
+      GeoLocation is COol
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -9,11 +9,19 @@
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="small">Geo-Location</ion-title>
+      <ion-title size="small">Cool GeoLocation</ion-title>
     </ion-toolbar>
   </ion-header>
   <div class="ion-content">
-      <button type="button" (click) = "getLocation()">Activer Loc</button>
+      <button type="button" (click) = "showPosition()">Show Loc</button>
+
+      <p *ngIf="lati">
+           Latitude is  {{lati}}
+      </p>
+
+      <p *ngIf="longi">
+        Longitude is  {{longi}}
+   </p>
 
   </div>
   <!-- <app-explore-container name="Tab 1 page"></app-explore-container> -->
